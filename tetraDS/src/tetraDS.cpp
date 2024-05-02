@@ -535,6 +535,10 @@ int main(int argc, char * argv[])
 	ros::Publisher right_error_code_publisher;
 	right_error_code_publisher = nemg.advertise<std_msgs::Int32>("right_error_code", 1);
 	std_msgs::Int32 right_error_code;
+	
+	ros::Publisher total_distance_publisher;
+	total_distance_publisher = nemg.advertise<std_msgs::Float32>("total_distance", 1);
+	std_msgs::Float32 total_distance;
 
 	//tetraDS_service
 	parameter_read_service  = param.advertiseService("param_read_cmd", Parameter_Read_Command);
