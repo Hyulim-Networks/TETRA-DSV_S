@@ -102,9 +102,9 @@
     <param name="duration" value="10000"/>
   </node>
 
-<!-- ROS to web republisher 
+<!-- ROS to web republisher -->
 <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" output="screen" />
-<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" ></include>-->
+<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" ></include>
 
 <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tetraDS_2dnav)/view_navigation.rviz" /> -->
 
