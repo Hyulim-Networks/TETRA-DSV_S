@@ -2930,6 +2930,9 @@ void resultCallback(const move_base_msgs::MoveBaseActionResult::ConstPtr& msgRes
     LED_Control(2, 100);
     //costmap clear call//
     //clear_costmap_client.call(m_request);
+    // initial
+    _pGoal_pose.goal_positionX = 0.0;
+    _pGoal_pose.goal_positionY = 0.0;
 
     if(_pFlag_Value.m_bflag_ComebackHome) //Home Postion -> docking mode start
     {
