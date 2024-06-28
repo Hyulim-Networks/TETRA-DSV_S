@@ -1,0 +1,8 @@
+{
+    "cmake.sourceDirectory": "C:/Users/dkswn/IdeaProjects/TETRA-DSV_S/tetraDS_landmark",
+    "files.associations": {
+        "vector": "cpp",
+        "xstring": "cpp",
+        "xutility": "cpp"
+    }
+}
