@@ -135,7 +135,7 @@ Visualization Manager:
           Value: true
       Name: RobotModel
       Robot Description: robot_description
-      TF Prefix: TE2319005
+      TF Prefix: TETRA_NS
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -178,7 +178,7 @@ Visualization Manager:
           Size (Pixels): 3
           Size (m): 0.009999999776482582
           Style: Points
-          Topic: /TE2319005/scan
+          Topic: /TETRA_NS/scan
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -206,7 +206,7 @@ Visualization Manager:
           Size (Pixels): 3
           Size (m): 0.029999999329447746
           Style: Flat Squares
-          Topic: /TE2319005/scan_laser
+          Topic: /TETRA_NS/scan_laser
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -219,7 +219,7 @@ Visualization Manager:
       Draw Behind: false
       Enabled: true
       Name: Map
-      Topic: /TE2319005/map
+      Topic: /TETRA_NS/map
       Unreliable: false
       Use Timestamp: false
       Value: true
@@ -231,7 +231,7 @@ Visualization Manager:
           Draw Behind: true
           Enabled: true
           Name: Costmap
-          Topic: /TE2319005/move_base/global_costmap/costmap
+          Topic: /TETRA_NS/move_base/global_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -255,7 +255,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /TE2319001/move_base/TebLocalPlannerROS/global_plan
+          Topic: /TETRA_NS/move_base/TebLocalPlannerROS/global_plan
           Unreliable: false
           Value: false
       Enabled: true
@@ -268,7 +268,7 @@ Visualization Manager:
           Draw Behind: false
           Enabled: true
           Name: Costmap
-          Topic: /TE2319005/move_base/local_costmap/costmap
+          Topic: /TETRA_NS/move_base/local_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true
@@ -292,7 +292,7 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /TE2319001/move_base/TebLocalPlannerROS/local_plan
+          Topic: /TETRA_NS/move_base/TebLocalPlannerROS/local_plan
           Unreliable: false
           Value: false
       Enabled: true
@@ -317,12 +317,12 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /TE2124006/move_base/GlobalPlanner/plan
+      Topic: /TETRA_NS/move_base/GlobalPlanner/plan
       Unreliable: false
       Value: false
     - Class: rviz/Marker
       Enabled: false
-      Marker Topic: /TE2319001/marker/node
+      Marker Topic: /TETRA_NS/marker/node
       Name: Marker
       Namespaces:
         {}
@@ -359,12 +359,12 @@ Visualization Manager:
         Shaft Length: 0.30000001192092896
         Shaft Radius: 0.05000000074505806
         Value: Arrow
-      Topic: /TE2319001/odom
+      Topic: /TETRA_NS/odom
       Unreliable: false
       Value: false
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /TE2319005/usb_cam/image_raw
+      Image Topic: /TETRA_NS/usb_cam/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -397,7 +397,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Flat Squares
-      Topic: /TE2319005/camera1/depth/color/points
+      Topic: /TETRA_NS/camera1/depth/color/points
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -416,15 +416,15 @@ Visualization Manager:
     - Class: rviz/Select
     - Class: rviz/SetInitialPose
       Theta std deviation: 0.2617993950843811
-      Topic: /TE2319005/initialpose
+      Topic: /TETRA_NS/initialpose
       X std deviation: 0.5
       Y std deviation: 0.5
     - Class: rviz/SetGoal
-      Topic: /TE2319005/move_base_simple/goal
+      Topic: /TETRA_NS/move_base_simple/goal
     - Class: rviz/Measure
     - Class: rviz/PublishPoint
       Single click: true
-      Topic: /TE2319005/clicked_point
+      Topic: /TETRA_NS/clicked_point
     - Class: rviz_custom/CreateRestrict
       Clear All: false
       Size: 20
