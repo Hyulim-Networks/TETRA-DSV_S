@@ -1,4 +1,4 @@
-// tetraDS-S dependency packages in SRC ... mwcha //
+// tetraDS-S dependency packages in SRC //
 
 ar_tag_demo
 ar_track_alvar-melodic-devel
