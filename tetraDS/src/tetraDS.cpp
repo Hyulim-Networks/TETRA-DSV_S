@@ -685,8 +685,8 @@ int main(int argc, char * argv[])
 		//Error Code Check -> Reset & servo On Loop
 		if(m_left_error_code != 48 || m_right_error_code != 48)
 		{
-			printf("[Motor Driver Error] Left Error Code: %d \n", m_left_error_code);
-			printf("[Motor Driver Error] Right Error Code: %d \n", m_right_error_code);
+			if(m_left_error_code != 48) ROS_ERROR("[Motor Driver Error] Left Error Code: %d \n", m_left_error_code);
+			if(m_right_error_code != 48) ROS_ERROR("[Motor Driver Error] Right Error Code: %d \n", m_right_error_code);
 			//dssp_rs232_drv_module_set_drive_err_reset();
 			usleep(1000);
 			dssp_rs232_drv_module_set_servo(0); //Servo Off // dssp_rs232_drv_module_set_servo(1); //Servo On
