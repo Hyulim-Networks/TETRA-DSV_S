@@ -134,7 +134,6 @@ using namespace rapidjson;
 //Set EKF & IMU Reset Service//
 #include "tetraDS_service/setekf.h"
 
-
 #define HIGH_BATTERY 95
 #define LOW_BATTERY 15
 #define MAX_RETRY_CNT 99
@@ -158,6 +157,7 @@ int  m_iRetry_cnt = 0;
 int ex_iDocking_CommandMode = 0;
 int m_iDocking_timeout_cnt = 0;
 int m_iNoMarker_cnt = 0;
+bool ex_bMissionDocking_Flag = false;
 //Teb Pose Info
 double m_dTeb_Pose_head_Angle[1024] = {0.0, };
 //patrol...//
@@ -1145,6 +1145,10 @@ void Docking_EXIT()
     cmd->linear.x =  0.0; 
     cmd->angular.z = 0.0;
     ex_iDocking_CommandMode = 0;
+    if(!_pFlag_Value.m_bumperhit_flag)
+    {
+        ex_bMissionDocking_Flag = false;
+    }
     printf("[EXIT]: Docking Exit !! \n");
 }
 
@@ -1742,17 +1746,28 @@ bool Goto_Command(tetraDS_service::gotolocation::Request &req,
 
     ROS_INFO("goto_id.id: %s", goto_goal_id.id.c_str());
 
-    if(_pRobot_Status.m_iCallback_Charging_status <= 1 && (_pAR_tag_pose.m_iAR_tag_id == -1 || _pAR_tag_pose.m_transform_pose_x >= 0.6)) //Nomal
+    if((_pRobot_Status.m_iCallback_Charging_status <= 1 && (!ex_bMissionDocking_Flag && !_pFlag_Value.m_bumperhit_flag)) && (_pAR_tag_pose.m_iAR_tag_id == -1 || ((_pAR_tag_pose.m_iAR_tag_id != _pRobot_Status.HOME_ID && _pAR_tag_pose.m_transform_pose_x >= 0.25) || _pAR_tag_pose.m_transform_pose_x >= 0.6))) //Nomal
     {
         ROS_INFO("Goto Nomal Loop !");
         setGoal(goal);
         bResult = true;
         
     }
-    
+    else if((_pFlag_Value.m_bumperhit_flag || ex_bMissionDocking_Flag) || (((_pAR_tag_pose.m_iAR_tag_id != -1) && (_pAR_tag_pose.m_iAR_tag_id != _pRobot_Status.HOME_ID)) && _pAR_tag_pose.m_transform_pose_x < 0.25))
+    {
+        ex_iDocking_CommandMode = 310;
+        bResult = true;
+    }
     else //docking
     {
-        ex_iDocking_CommandMode = 10; //Depart Move
+        if(_pAR_tag_pose.m_iAR_tag_id == 0)
+        {
+            ex_iDocking_CommandMode = 10; //Depart Move
+        }
+        else
+        {
+            ex_iDocking_CommandMode = 310;
+        }
         bResult = true;
     }
 
@@ -1813,14 +1828,26 @@ bool Goto_Command2(tetraDS_service::gotolocation2::Request &req,
     LED_Toggle_Control(1, 3,100,3,1);
     LED_Turn_On(63);
 
-    if(_pRobot_Status.m_iCallback_Charging_status <= 1 && (_pAR_tag_pose.m_iAR_tag_id == -1 || _pAR_tag_pose.m_transform_pose_x >= 0.6)) //Nomal
+    if((_pRobot_Status.m_iCallback_Charging_status <= 1 && (!ex_bMissionDocking_Flag && !_pFlag_Value.m_bumperhit_flag)) && (_pAR_tag_pose.m_iAR_tag_id == -1 || ((_pAR_tag_pose.m_iAR_tag_id != _pRobot_Status.HOME_ID && _pAR_tag_pose.m_transform_pose_x >= 0.35) || _pAR_tag_pose.m_transform_pose_x >= 0.6))) //Nomal
     {
         setGoal(goal);
         bResult = true;
     }
+    else if((_pFlag_Value.m_bumperhit_flag || ex_bMissionDocking_Flag) || (((_pAR_tag_pose.m_iAR_tag_id != -1) && (_pAR_tag_pose.m_iAR_tag_id != _pRobot_Status.HOME_ID)) && _pAR_tag_pose.m_transform_pose_x < 0.25))
+    {
+        ex_iDocking_CommandMode = 310;
+        bResult = true;
+    }
     else //Docking...
     {
-        ex_iDocking_CommandMode = 10; //Depart Move
+        if(_pAR_tag_pose.m_iAR_tag_id == 0)
+        {
+            ex_iDocking_CommandMode = 10; //Depart Move
+        }
+        else
+        {
+            ex_iDocking_CommandMode = 310;
+        }
         bResult = true;//false;
     }
 	/*
@@ -2971,18 +2998,21 @@ void resultCallback(const move_base_msgs::MoveBaseActionResult::ConstPtr& msgRes
     }
     else
     {
-        //costmap clear call//
-        clear_costmap_client.call(m_request);
+        if(!ex_bMissionDocking_Flag)
+        {
+            //costmap clear call//
+            clear_costmap_client.call(m_request);
 
-        LED_Toggle_Control(1, 3,100,3,1);
-        if(_pFlag_Value.m_bflag_Conveyor_docking)
-            LED_Turn_On(45); //sky_blue
-        else
-            LED_Turn_On(63);
+            LED_Toggle_Control(1, 3,100,3,1);
+            if(_pFlag_Value.m_bflag_Conveyor_docking)
+                LED_Turn_On(45); //sky_blue
+            else
+                LED_Turn_On(63);
 
-        ROS_INFO("[RETRY Behavior]: goto_ %s", goal.goal_id.id.c_str());
-        setGoal(goal);
-        m_iRetry_cnt++;
+            ROS_INFO("[RETRY Behavior]: goto_ %s", goal.goal_id.id.c_str());
+            setGoal(goal);
+            m_iRetry_cnt++;
+        }
     }
 
     m_flag_setgoal = false;
@@ -3294,6 +3324,388 @@ bool BumperCollision_Behavior()
         } 
     }
 
+    return bResult;
+}
+
+/****************************************************************/
+//20240702 CYW//
+//Mission Station Docking Function//
+bool MissionStation_tracking(bool bOn, int marker_id)
+{
+    bool bResult = false;
+    geometry_msgs::TwistPtr cmd(new geometry_msgs::Twist());
+
+    //Todo.....
+    if(bOn)
+    {
+        float m_fdistance = 0.0;
+        if(_pAR_tag_pose.m_iAR_tag_id == marker_id)
+        {
+            m_fdistance = sqrt(_pAR_tag_pose.m_transform_pose_x * _pAR_tag_pose.m_transform_pose_x + _pAR_tag_pose.m_transform_pose_y * _pAR_tag_pose.m_transform_pose_y);
+            //printf("master_distance: %.5f \n", m_fdistance);
+            if(m_fdistance > 0.41 && m_fdistance < 1.5)
+            {
+                cmd->linear.x = 1.0 * (m_fdistance /1.2) * 0.15; 
+                //printf("linear velocity: %.2f \n", cmd->linear.x);
+                if(cmd->linear.x > 1.0)
+                {
+                    //Linear Over speed exit loop...
+                    cmd->linear.x =  0.0; 
+                    cmd->angular.z = 0.0;
+                    printf("[Linear Over speed]: follower is closing \n");
+                    return false;
+                }
+                
+                cmd->angular.z = -1.0 * atan2(_pAR_tag_pose.m_transform_pose_y, _pAR_tag_pose.m_transform_pose_x) / 1.25;
+                //printf("angular velocity: %.2f \n", cmd-angular.z);
+                if((cmd->angular.z > 1.0) || (cmd->angular.z < -1.0))
+                {
+                    //Angular Over speed exit loop......
+                    cmd->linear.x =  0.0; 
+                    cmd->angular.z = 0.0;
+                    printf("[Angular Over speed]: follower is closing \n");
+                    return false;
+                }
+                
+                cmdpub_.publish(cmd);
+            }
+            else
+            {
+                cmd->linear.x =  0.0; 
+                cmdpub_.publish(cmd);
+                printf("Tracking STOP !! \n");
+                ex_iDocking_CommandMode = 303;
+                m_iNoMarker_cnt = 0;
+            }
+        }
+        else
+        {
+            printf("No Marker, Rotation Movement !! \n");
+            cmd->angular.z = Rotation_Movement(); //0.1;
+            cmdpub_.publish(cmd);
+
+            if(m_iNoMarker_cnt > 4000) //retry timeout!!
+            {
+                m_iNoMarker_cnt = 0;
+                cmd->linear.x =  0.0; 
+                cmd->angular.z = 0.0;
+                cmdpub_.publish(cmd);
+                printf("DockingStation scan Fail !! \n");
+                ex_iDocking_CommandMode = 309;
+
+            }
+            else
+            {
+                m_iNoMarker_cnt++;
+            }
+
+        }
+
+    }
+    else
+    {
+        cmd->linear.x =  0.0; 
+        cmd->angular.z = 0.0;
+        cmdpub_.publish(cmd);
+        printf("Docking Loop STOP!_not find Marker!! \n");
+        ex_iDocking_CommandMode = 0;
+    }
+    
+
+    bResult = true;
+    return bResult;
+}
+
+bool MissionStation_Yaw_tracking()
+{ 
+    bool bResult = false;
+    geometry_msgs::TwistPtr cmd(new geometry_msgs::Twist());
+    
+    int m_iback_cnt = 0;
+    float m_fdistance = 0.0;
+    m_fdistance = sqrt(_pAR_tag_pose.m_transform_pose_x * _pAR_tag_pose.m_transform_pose_x + _pAR_tag_pose.m_transform_pose_y * _pAR_tag_pose.m_transform_pose_y);
+
+    if(_pAR_tag_pose.m_target_yaw <= 0.0174533 && _pAR_tag_pose.m_target_yaw >= -0.0174533) //+- 1.0deg
+    {
+        ex_iDocking_CommandMode = 304;
+        bResult = true;
+        return bResult;
+    }
+
+    if(_pAR_tag_pose.m_target_yaw > 0)
+    {
+        printf("++dir \n");
+        cmd->angular.z = -1.0 * _pAR_tag_pose.m_target_yaw * 1.6;
+        cmdpub_.publish(cmd);
+        sleep(2);
+
+        if(m_fdistance > 1.0 || m_fdistance < -1.0)
+        {
+            printf("[Error] Marker too far away !! \n");
+            cmd->angular.z = 0.0;
+            cmd->linear.x = 0.0;
+            cmdpub_.publish(cmd);
+
+            ex_iDocking_CommandMode = 309;
+            bResult = false;
+            return bResult;
+        }
+
+
+        while(m_iback_cnt < 30)
+        {
+            // if(_pFlag_Value.m_bFlag_Obstacle_cygbot)
+            // {
+            //     cmd->angular.z = 0.0;
+            //     cmd->linear.x = 0.0;
+            //     cmdpub_.publish(cmd);
+            // }
+            // else
+            // {
+                cmd->angular.z = 0.0;
+                cmd->linear.x = -1.0 * m_fdistance * 0.2;
+                cmdpub_.publish(cmd);
+                m_iback_cnt++;
+            // }
+            usleep(100000); //100ms
+        }
+
+        cmd->angular.z = 0.0;
+        cmd->linear.x = 0.0;
+        cmdpub_.publish(cmd);
+        printf("++dir STOP \n");
+        m_iRotation_Mode = 2;
+        ex_iDocking_CommandMode = 302;
+    }
+    else
+    {
+        printf("--dir \n");
+        cmd->angular.z = -1.0 * _pAR_tag_pose.m_target_yaw * 1.6;
+        cmdpub_.publish(cmd);
+        sleep(2);
+
+        if(m_fdistance > 1.0 || m_fdistance < -1.0)
+        {
+            printf("[Error] Marker too far away !! \n");
+            cmd->angular.z = 0.0;
+            cmd->linear.x = 0.0;
+            cmdpub_.publish(cmd);
+
+            ex_iDocking_CommandMode = 309;
+            bResult = false;
+            return bResult;
+        }
+
+        while(m_iback_cnt < 30)
+        {
+            // if(_pFlag_Value.m_bFlag_Obstacle_cygbot)
+            // {
+            //     cmd->angular.z = 0.0;
+            //     cmd->linear.x = 0.0;
+            //     cmdpub_.publish(cmd);
+            // }
+            // else
+            // {
+                cmd->angular.z = 0.0;
+                cmd->linear.x = -1.0 * m_fdistance * 0.2;
+                cmdpub_.publish(cmd);
+                m_iback_cnt++;
+            // }
+            usleep(100000); //100ms
+            
+        }
+
+        cmd->angular.z = 0.0;
+        cmd->linear.x = 0.0;
+        cmdpub_.publish(cmd);
+        printf("--dir STOP \n");
+        m_iRotation_Mode = 1;
+        ex_iDocking_CommandMode = 302;
+    }
+    
+
+    bResult = true;
+    return bResult;
+}
+
+bool MissionStation_tracking2(int marker_id)
+{
+    bool bResult = false;
+    geometry_msgs::TwistPtr cmd(new geometry_msgs::Twist());
+    
+    float m_fdistance = 0.0;
+    if(_pAR_tag_pose.m_iAR_tag_id == marker_id)
+    {
+        m_fdistance = sqrt(_pAR_tag_pose.m_transform_pose_x * _pAR_tag_pose.m_transform_pose_x + _pAR_tag_pose.m_transform_pose_y * _pAR_tag_pose.m_transform_pose_y);
+        //printf("master_distance: %.5f \n", m_fdistance);
+        if(!_pFlag_Value.m_bumperhit_flag)
+        {
+            cmd->linear.x = 1.0 * (m_fdistance /1.2) * 0.3; //max speed 0.3m/s
+            //printf("linear velocity: %.2f \n", cmd->linear.x);
+            if(cmd->linear.x > 1.0)
+            {
+                //Linear Over speed exit loop......
+                cmd->linear.x =  0.0; 
+                cmd->angular.z = 0.0;
+                printf("[Linear Over speed]: follower is closing \n");
+                return false;
+            }
+            
+            cmd->angular.z = -1.0 * atan2(_pAR_tag_pose.m_transform_pose_y, _pAR_tag_pose.m_transform_pose_x) / 1.25;
+            //printf("angular velocity: %.2f \n", cmd->angular.z);
+            if((cmd->angular.z > 1.0) || (cmd->angular.z < -1.0))
+            {
+                //Angular Over speed exit loop......
+                cmd->linear.x =  0.0; 
+                cmd->angular.z = 0.0;
+                printf("[Angular Over speed]: follower is closing \n");
+                return false;
+            }
+            
+            cmdpub_.publish(cmd);
+        }
+        else
+        {
+            cmd->linear.x =  0.0; 
+            cmd->angular.z = 0.0;
+            cmdpub_.publish(cmd);
+            printf("Tracking STOP & Docking Finish !! \n");
+            ex_iDocking_CommandMode = 306; //5;
+            m_iNoMarker_cnt = 0;
+        }
+    }
+    else
+    {
+        cmd->linear.x =  0.0; 
+        cmd->angular.z = 0.0;
+        cmdpub_.publish(cmd);
+        printf("No Marker 2! \n");
+        if(m_iNoMarker_cnt >= 10)
+        {
+            m_iNoMarker_cnt = 0;
+            ex_iDocking_CommandMode = 305;
+            printf("No Marker 2_Timeout! \n");
+        }
+        else
+        {
+            m_iNoMarker_cnt++;
+        }
+    }
+
+    bResult = true;
+    return bResult;
+}
+
+bool Approach_MissionStation2Move()
+{
+    bool bResult = false;
+    geometry_msgs::TwistPtr cmd(new geometry_msgs::Twist());
+
+    if(!_pFlag_Value.m_bumperhit_flag)
+    {
+        if(m_iDocking_timeout_cnt > 5000)
+        {
+            cmd->linear.x =  0.0; 
+            cmd->angular.z = 0.0;
+            cmdpub_.publish(cmd);
+            m_iDocking_timeout_cnt = 0;
+            ex_iDocking_CommandMode = 309;
+        }
+        else
+        {
+            cmd->linear.x =  0.1; 
+            cmd->angular.z = 0.0;
+            cmdpub_.publish(cmd);
+            m_iDocking_timeout_cnt++;
+        }
+    }
+    else
+    {
+        cmd->linear.x =  0.0; 
+        cmd->angular.z = 0.0;
+        cmdpub_.publish(cmd);
+        printf("Approach Loop STOP !! \n");
+        ex_iDocking_CommandMode = 306;
+    }
+    
+    bResult = true;
+    return bResult;
+}
+
+bool Depart_MissionStation2Move(int marker_id)
+{
+    bool bResult = false;
+    printf("Depart_MissionStation2Move ... docking exit!! \n"); //240315 mwcha made new func
+
+    float m_fdistance = 0.0;
+    geometry_msgs::TwistPtr cmd(new geometry_msgs::Twist());
+    
+    if(_pFlag_Value.m_bumperhit_flag && ex_bMissionDocking_Flag)
+    {
+        cmd->linear.x =  -0.05; 
+        cmd->angular.z = 0.0;
+        //cmdpub_.publish(cmd);
+        bResult = false;
+    }
+    else
+    {
+        if(_pAR_tag_pose.m_iAR_tag_id == -1)
+        {
+            if(_pFlag_Value.m_bFlag_Obstacle_cygbot)
+            {
+                cmd->angular.z = 0.0;
+                cmd->linear.x = 0.0;
+
+                bResult = false;
+            }
+            else
+            {
+                cmd->linear.x =  -0.05; 
+                cmd->angular.z = 0.0;
+                //cmdpub_.publish(cmd);
+                bResult = false;
+            }
+        }
+        else
+        {
+            m_fdistance = sqrt(_pAR_tag_pose.m_transform_pose_x * _pAR_tag_pose.m_transform_pose_x + _pAR_tag_pose.m_transform_pose_y * _pAR_tag_pose.m_transform_pose_y);
+            printf("Depart_fdistance: %.5f \n", m_fdistance);
+
+            if(_pAR_tag_pose.m_transform_pose_x <= 0.35) //350mm depart move
+            {
+                // if(_pFlag_Value.m_bFlag_Obstacle_cygbot)
+                // {
+                //     cmd->linear.x =  0.0; 
+                //     cmd->angular.z = 0.0;
+                //     //cmdpub_.publish(cmd);
+                //     bResult = false;
+                // }
+                // else
+                // {
+                    cmd->linear.x =  -0.05; 
+                    cmd->angular.z = 0.0;
+                    //cmdpub_.publish(cmd);
+                    bResult = false;
+                // }
+            }
+            else
+            {
+                cmd->linear.x =  0.0; 
+                cmd->angular.z = 0.0;
+                //cmdpub_.publish(cmd);
+
+                //add goto cmd call//
+                setGoal(goal);
+
+                ex_bMissionDocking_Flag = false;
+                ex_iDocking_CommandMode = 0;
+
+                bResult = true;
+            }
+        }
+    }
+
+    cmdpub_.publish(cmd);
     return bResult;
 }
 
@@ -3917,6 +4329,11 @@ bool Goto_Conveyor_Command(tetraDS_service::gotoconveyor::Request &req,
         LED_Turn_On(45); //sky_blue
         setGoal(goal);
     }
+    else if(_pFlag_Value.m_bumperhit_flag || ex_bMissionDocking_Flag)
+    {
+        ex_iDocking_CommandMode = 310;
+        bResult = true;
+    }
     else //Docking...
     {
         ex_iDocking_CommandMode = 10; //Depart Move
@@ -4360,6 +4777,90 @@ void *DockingThread_function(void *data)
                     ex_iDocking_CommandMode = 0;
                 }
                 break;
+            
+            /**********************20240702 CYW************************/
+            // Mission Station Docking (Bumper) Loop//
+            case 300:
+                ex_iDocking_CommandMode = 301;
+                docking_progress.data = 300;
+                docking_progress_pub.publish(docking_progress);
+                break;
+            case 301:
+                LED_Toggle_Control(1, 3,100,3,100);
+                LED_Turn_On(63);
+                //usb_cam_On_client.call(m_request);
+                sleep(2);
+                ex_iDocking_CommandMode = 302;
+                docking_progress.data = 301;
+                docking_progress_pub.publish(docking_progress);
+                break;
+            case 302:
+                MissionStation_tracking(true, _pAR_tag_pose.m_iSelect_AR_tag_id);
+                if(_pFlag_Value.m_bfalg_DockingExit)
+                {
+                    Docking_EXIT();
+                    ex_iDocking_CommandMode = 0;
+                }
+                docking_progress.data = 302;
+                docking_progress_pub.publish(docking_progress);
+                break;
+            case 303:
+                _pAR_tag_pose.m_target_yaw = _pAR_tag_pose.m_fAR_tag_pitch;
+                MissionStation_Yaw_tracking();
+                if(_pFlag_Value.m_bfalg_DockingExit)
+                {
+                    Docking_EXIT();
+                    ex_iDocking_CommandMode = 0;
+                }
+                docking_progress.data = 303;
+                docking_progress_pub.publish(docking_progress);
+                break;
+            case 304:
+                MissionStation_tracking2(_pAR_tag_pose.m_iSelect_AR_tag_id);
+                if(_pFlag_Value.m_bfalg_DockingExit)
+                {
+                    Docking_EXIT();
+                    ex_iDocking_CommandMode = 0;
+                }
+                docking_progress.data = 304;
+                docking_progress_pub.publish(docking_progress);
+                break;
+            case 305:
+                //charging_port_On_client.call(m_request2);
+                Approach_MissionStation2Move();
+                if(_pFlag_Value.m_bfalg_DockingExit)
+                {
+                    Docking_EXIT();
+                    ex_iDocking_CommandMode = 0;
+                }
+                docking_progress.data = 305;
+                docking_progress_pub.publish(docking_progress);
+                break;
+            case 306:
+                LED_Turn_On(9);
+                
+                ROS_INFO_STREAM("TETRA Mission Docking Done!");
+                // m_iReset_flag = 1;
+                docking_progress.data = 306;
+                docking_progress_pub.publish(docking_progress);
+                ex_bMissionDocking_Flag = true;
+                ////PoseReset_call
+                // Reset_Robot_Pose();
+                LED_Toggle_Control(1, 5,100,5,1);
+                LED_Turn_On(63);
+
+                ex_iDocking_CommandMode = 0;
+                break;
+            case 309:
+                printf("Docking FAIL ! \n");
+                LED_Toggle_Control(1, 10,100,10,1);
+                LED_Turn_On(18);
+                ex_iDocking_CommandMode = 310;
+                // ex_iDocking_CommandMode = 119;
+                break;
+            case 310:
+                Depart_MissionStation2Move(_pAR_tag_pose.m_iSelect_AR_tag_id);
+                break;
             default:
                 break;
         }
@@ -4390,6 +4891,15 @@ void *AutoThread_function(void *data)
                     clear_costmap_client.call(m_request);
                     setGoal(goal);
                 }
+                else if(_pFlag_Value.m_bumperhit_flag || ex_bMissionDocking_Flag)
+                {
+                    ex_iDocking_CommandMode = 310;
+                    while(ex_iDocking_CommandMode != 0)
+                    {
+                        sleep(1);
+                        ROS_INFO("Depart_MissionStation2Move....");
+                    }
+                }
                 else //Docking check...
                 {
                     ex_iDocking_CommandMode = 10; //Depart Move
@@ -4398,7 +4908,6 @@ void *AutoThread_function(void *data)
                         sleep(1); //1 sec
                         ROS_INFO("Depart_Station2Move....");
                     }
-
                 }
 
                 ROS_INFO("[patrol]: goto_ %s", arr_patrol_location[i].c_str());
@@ -4658,6 +5167,10 @@ void RVIZ_GUI_Goto_Callback(const std_msgs::String::ConstPtr& msg)
         if(_pRobot_Status.m_iCallback_Charging_status <= 1) //Nomal
         {
             setGoal(goal);
+        }
+        else if(_pFlag_Value.m_bumperhit_flag || ex_bMissionDocking_Flag)
+        {
+            ex_iDocking_CommandMode = 310;
         }
         else //Docking...
         {
