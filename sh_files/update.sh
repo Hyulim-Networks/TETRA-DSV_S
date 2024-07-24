@@ -3,7 +3,13 @@
 cd ~/catkin_ws/src
 git add .
 git reset --hard
-git pull origin main
+git pull origin master
+
+rm -rf ~/catkin_ws/build
+rm -rf ~/catkin_ws/devel
+rm -rf ~/catkin_ws/.catkin_workspace
+cd ~/catkin_ws
+catkin_make
 
 rm ~/update.sh
 ln ~/catkin_ws/src/sh_files/update.sh ~/update.sh
