@@ -1616,51 +1616,8 @@ bool GetLocation_Command(tetraDS_service::getlocation::Request  &req,
 	return true;
 }
 
-// bool Depart_Station2Move()
-// {
-//     bool bResult = false;
-//     printf("Depart_station2Move ... docking exit!! \n"); //240315 mwcha
-//     //todo...
-//     if()
-//     {
 
-//     }
-//     geometry_msgs::TwistPtr cmd(new geometry_msgs::Twist());
-//     if(_pAR_tag_pose.m_transform_pose_x <= 0.6) //600mm depart move
-//     {
-//         if(_pFlag_Value.m_bFlag_Obstacle_cygbot)
-//         {
-//             cmd->linear.x =  0.0; 
-//             cmd->angular.z = 0.0;
-//             cmdpub_.publish(cmd);
-//             bResult = false;
-//         }
-//         else
-//         {
-//             cmd->linear.x =  -0.05; 
-//             cmd->angular.z = 0.0;
-//             cmdpub_.publish(cmd);
-//             bResult = false;
-//         }    
-//     }
-//     else
-//     {
-//         cmd->linear.x =  0.0; 
-//         cmd->angular.z = 0.0;
-//         cmdpub_.publish(cmd);
-
-//         //add goto cmd call//
-//         setGoal(goal);
-
-//         ex_iDocking_CommandMode = 0;
-
-//         bResult = true;
-//     }
-
-//     return bResult;
-// }
-
-bool Depart_Station2Move(int marker_id)
+bool Depart_Station2Move()
 {
     bool bResult = false;
     printf("Depart_station2Move ... docking exit!! \n"); //240315 mwcha made new func
@@ -2416,6 +2373,7 @@ void Reset_EKF_SetPose()
     
 	SetPose_cmd_client.call(setpose_srv); //Set_pose call//
 	//printf("##Set_Pose(EKF)! \n");
+    usleep(200000);
 
     initPose_.header.stamp = ros::Time(0); //ros::Time::now(); 
     initPose_.header.frame_id = "map";
@@ -4608,7 +4566,7 @@ void *DockingThread_function(void *data)
                 docking_progress_pub.publish(docking_progress);
                 break;
             case 2:
-                ChargingStation_tracking(true, _pRobot_Status.HOME_ID);
+                ChargingStation_tracking(true, _pAR_tag_pose.m_iSelect_AR_tag_id);
                 if(_pFlag_Value.m_bfalg_DockingExit)
                 {
                     Docking_EXIT();
@@ -4629,7 +4587,7 @@ void *DockingThread_function(void *data)
                 docking_progress_pub.publish(docking_progress);
                 break;
             case 4:
-                ChargingStation_tracking2(_pRobot_Status.HOME_ID);
+                ChargingStation_tracking2(_pAR_tag_pose.m_iSelect_AR_tag_id);
                 if(_pFlag_Value.m_bfalg_DockingExit)
                 {
                     Docking_EXIT();
@@ -4671,7 +4629,7 @@ void *DockingThread_function(void *data)
                 ex_iDocking_CommandMode = 119;
                 break;
             case 10:
-                Depart_Station2Move(_pAR_tag_pose.m_iSelect_AR_tag_id);
+                Depart_Station2Move();
                 break;
             /****************************************************************/
             // Conveyor Docking Loop//
@@ -4952,145 +4910,6 @@ void *AutoThread_function(void *data)
             
 
         }
-        // else if(_pFlag_Value.m_bflag_patrol2)
-        // {
-        //     //Step 1. -> Goto Loading////////////////////////////////////////////////////////////
-        //     LED_Toggle_Control(1,3,100,3,1);
-        //     LED_Turn_On(100); //blue led
-
-        //     OpenLocationFile(m_strLoading_loacation_name);
-        //     goto_goal_id.id = m_strLoading_loacation_name;
-        //     _pRobot_Status.CONVEYOR_ID = m_iLoading_ID;
-        //     _pRobot_Status.CONVEYOR_MOVEMENT = 1;
-        //     _pFlag_Value.m_bflag_Conveyor_docking = true;
-
-        //     if(_pRobot_Status.m_iCallback_Charging_status <= 1) //Nomal
-        //     {
-        //         setGoal(goal);
-        //     }
-        //     else //Docking check...
-        //     {
-        //         ex_iDocking_CommandMode = 10; //Depart Move
-        //     }
-
-        //     ROS_INFO("[patrol]: goto_conveyor-> Loading...");
-        //     while(_pRobot_Status.m_iMovebase_Result != 3)
-        //     {
-        //         if(!_pFlag_Value.m_bflag_patrol2 && !_pFlag_Value.m_bflag_goto_cancel)
-        //         {
-        //             goto_goal_id.id = "";
-        //             ROS_INFO("Goto Cancel call");
-        //             GotoCancel_pub.publish(goto_goal_id);
-        //             _pFlag_Value.m_bflag_goto_cancel = true;
-        //         }
-        //         else
-        //             usleep(1000000); //100ms
-        //     }
-        //     _pRobot_Status.m_iMovebase_Result = 0;
-        //     _pFlag_Value.m_bflag_goto_cancel = false;
-
-        //     while(_pRobot_Status.m_iCallback_Charging_status != 11)
-        //     {
-        //         if(!_pFlag_Value.m_bflag_patrol2 && !_pFlag_Value.m_bflag_goto_cancel)
-        //         {
-        //             goto_goal_id.id = "";
-        //             ROS_INFO("Goto Cancel call");
-        //             GotoCancel_pub.publish(goto_goal_id);
-        //             _pFlag_Value.m_bflag_goto_cancel = true;
-        //         }
-        //         else
-        //             sleep(1); //1 sec
-        //     }
-        //     //Conveyor Movement...
-        //     conveyor_srv.request.start = 1;
-        //     Conveyor_cmd_client.call(conveyor_srv);
-        //     ROS_INFO("CN1 CAll...");
-        //     sleep(1);
-
-        //     printf("_pRobot_Status.m_iConveyor_Sensor_info : %d \n", _pRobot_Status.m_iConveyor_Sensor_info );
-        //     //Loading Finish Check
-        //     while(_pRobot_Status.m_iConveyor_Sensor_info > 1)
-        //     {
-        //         ROS_INFO("Loading Loop Finish Wait...");
-        //         printf("_pRobot_Status.m_iConveyor_Sensor_info : %d \n", _pRobot_Status.m_iConveyor_Sensor_info );
-        //         sleep(1); //1 sec
-        //     }
-
-        //     sleep(5);
-
-
-        //     //Step 2. -> Goto Unloading ////////////////////////////////////////////////////////////
-        //     LED_Toggle_Control(1,3,100,3,1);
-        //     LED_Turn_On(100); //blue led
-
-        //     OpenLocationFile(m_strUnloading_loacation_name);
-        //     goto_goal_id.id = m_strUnloading_loacation_name;
-        //     _pRobot_Status.CONVEYOR_ID = m_iUnloading_ID;
-        //     _pRobot_Status.CONVEYOR_MOVEMENT = 2;
-        //     _pFlag_Value.m_bflag_Conveyor_docking = true;
-
-        //     if(_pRobot_Status.m_iCallback_Charging_status <= 1) //Nomal
-        //     {
-        //         setGoal(goal);
-        //     }
-        //     else //Docking check...
-        //     {
-        //         ex_iDocking_CommandMode = 10; //Depart Move
-        //     }
-
-        //     sleep(1);
-        //     //Conveyor Movement...
-        //     conveyor_srv.request.start = 0;
-        //     Conveyor_cmd_client.call(conveyor_srv);
-
-        //     ROS_INFO("[patrol]: goto_conveyor-> Unloading...");
-        //     while(_pRobot_Status.m_iMovebase_Result != 3)
-        //     {
-        //         if(!_pFlag_Value.m_bflag_patrol2 && !_pFlag_Value.m_bflag_goto_cancel)
-        //         {
-        //             goto_goal_id.id = "";
-        //             ROS_INFO("Goto Cancel call");
-        //             GotoCancel_pub.publish(goto_goal_id);
-        //             _pFlag_Value.m_bflag_goto_cancel = true;
-        //         }
-        //         else
-        //             usleep(1000000); //100ms
-        //     }
-        //     _pRobot_Status.m_iMovebase_Result = 0;
-        //     _pFlag_Value.m_bflag_goto_cancel = false;
-
-        //     //Conveyor Movement...
-        //     sleep(1);
-        //     conveyor_srv.request.start = 1;
-        //     Conveyor_cmd_client.call(conveyor_srv);
-        //     ROS_INFO("CN1 CAll...");
-
-        //     while(_pRobot_Status.m_iCallback_Charging_status != 13)
-        //     {
-        //         if(!_pFlag_Value.m_bflag_patrol2 && !_pFlag_Value.m_bflag_goto_cancel)
-        //         {
-        //             goto_goal_id.id = "";
-        //             ROS_INFO("Goto Cancel call");
-        //             GotoCancel_pub.publish(goto_goal_id);
-        //             _pFlag_Value.m_bflag_goto_cancel = true;
-        //         }
-        //         else
-        //             sleep(1); //1 sec
-        //     }
-
-        //     //Unloading Finish Check
-        //     while(_pRobot_Status.m_iConveyor_Sensor_info <= 1)
-        //     {
-        //         ROS_INFO("Unloading Loop Finish Wait...");
-        //         sleep(1); //1 sec
-        //     }
-
-        //     sleep(1);
-        //     //Conveyor Movement...
-        //     conveyor_srv.request.start = 0;
-        //     Conveyor_cmd_client.call(conveyor_srv);
-
-        // }
         
         sleep(1); //1sec
     }
