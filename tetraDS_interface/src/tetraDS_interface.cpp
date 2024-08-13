@@ -975,7 +975,7 @@ int main(int argc, char * argv[])
 	//battery & status
 	tetra_battery_publisher = n.advertise<std_msgs::Int32>("tetra_battery", 1);
 	std_msgs::Int32 battery_level;
-	docking_status_publisher = n.advertise<std_msgs::Int32>("docking_status", 1);
+	docking_status_publisher = n.advertise<std_msgs::Int32>("docking_status", 10);
 	std_msgs::Int32 docking_status;
 
 	//PowerBoard Check
