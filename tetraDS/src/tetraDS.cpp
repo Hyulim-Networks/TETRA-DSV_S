@@ -485,7 +485,6 @@ void SetMoveCommand(double fLinear_vel, double fAngular_vel)
 	int iData2 = 1000.0 * RPM_to_ms(Right_Wheel_vel);
 	dssp_rs232_drv_module_set_velocity(iData1, iData2);
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Main Loop//
 int main(int argc, char * argv[])
@@ -594,7 +593,7 @@ int main(int argc, char * argv[])
 		input_linear  = linear;
 		input_angular = angular;
 
-		//smoother velocity Loop//////////////////////////////////////////////////
+		//smoother velocity Loop
 		//linear_velocity
 		if(linear > 0)
 			m_bForwardCheck = true;
@@ -641,7 +640,6 @@ int main(int argc, char * argv[])
 				control_linear = input_linear;
 			}
 		}
-		//////////////////////////////////////////////////////////////////////////
 		
 		//control_linear = input_linear;
 		control_angular = input_angular;
@@ -687,28 +685,9 @@ int main(int argc, char * argv[])
 		{
 			if(m_left_error_code != 48) ROS_ERROR("[Motor Driver Error] Left Error Code: %d \n", m_left_error_code);
 			if(m_right_error_code != 48) ROS_ERROR("[Motor Driver Error] Right Error Code: %d \n", m_right_error_code);
-			//dssp_rs232_drv_module_set_drive_err_reset();
 			usleep(1000);
-			dssp_rs232_drv_module_set_servo(0); //Servo Off // dssp_rs232_drv_module_set_servo(1); //Servo On
+			dssp_rs232_drv_module_set_servo(0); //Servo Off 
 		}
-
-		// //Error Code Check -> Reset & servo On Loop 240319 ... add by mwcha ... but need to H/W test,, S/W has made all
-		// if (m_left_error_code != 48 || m_right_error_code != 48)
-		// {
-		// 	for (; error_count < 5; ++error_count)
-		// 	{
-		// 		if (!CheckMotorDriverErrors(m_left_error_code, m_right_error_code))
-		// 		{
-		// 			break;
-		// 		}
-		// 	}
-		// 	if (error_count >= 5) {
-		// 		printf("[Motor Driver Error] Error occurred more than 5 times! SERVO OFF! \n");
-		// 		usleep(1000); //0.001sec
-		// 		dssp_rs232_drv_module_set_servo(0); //Servo Off
-		// 		break;
-		// 	}
-		// }
 
 		//Switch and Bumper Loop ... 230629 add by mwcha
 		if(m_bumper_data == 2 || m_bumper_data == 3)
