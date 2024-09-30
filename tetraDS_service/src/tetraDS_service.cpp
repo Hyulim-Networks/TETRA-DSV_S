@@ -200,6 +200,8 @@ bool m_flag_minor_update[255] = {false, };
 //virtualWallCheck ... 231115 add
 bool m_bFlag_virtualWallCheck = true;
 
+double Set_Weight_obstacle = 20.0;
+
 //Speed Zone Point...
 typedef struct TAGPOINT
 {
