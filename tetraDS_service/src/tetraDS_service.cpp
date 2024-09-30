@@ -134,6 +134,8 @@ using namespace rapidjson;
 //Set EKF & IMU Reset Service//
 #include "tetraDS_service/setekf.h"
 
+#include "tetraDS_service/setweightopstacle.h"
+
 #define HIGH_BATTERY 95
 #define LOW_BATTERY 15
 #define MAX_RETRY_CNT 99
@@ -567,6 +569,9 @@ ros::ServiceServer deletedataall_service;
 //Set EKF & IMU Reset Service//
 tetraDS_service::setekf set_ekf_cmd;
 ros::ServiceServer set_ekf_service;
+
+tetraDS_service::setweightopstacle setweightopstacle_cmd;
+ros::ServiceServer set_weight_obstacle_service; 
 
 //**Command srv _ Service Client************************/
 //Usb_cam Service Client//
@@ -5657,6 +5662,26 @@ void InitialposeCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPt
 
 }
 
+bool Set_Weight_obstacle_Command(tetraDS_service::setweightopstacle::Request &req, 
+				                tetraDS_service::setweightopstacle::Response &res)
+{
+    bool bResult = false;
+
+    Dynamic_reconfigure_Teb_Set_DoubleParam("weight_obstacle", (double)req.weight_obstacle);
+    Set_Weight_obstacle = (double)req.weight_obstacle;
+
+    /*
+    float64 weight_obstacle
+    ---
+    float64 weight_obstacle
+    bool command_Result
+    */
+    res.weight_obstacle = req.weight_obstacle;
+    bResult = true;
+    res.command_Result = bResult;
+    return true;
+}
+
 /////*******************************************************************************//////
 
 int main (int argc, char** argv)
@@ -5787,8 +5812,9 @@ int main (int argc, char** argv)
     virtual_obstacle_service = service_h.advertiseService("virtual_obstacle_cmd", Virtual_Obstacle_Command);
     //Set EKF & IMU Reset Service//
     set_ekf_service = service_h.advertiseService("set_ekf_cmd", SetEKF_Command);
-    //add.. Manual Backmove Service ... 240125//
-    //manual_backmove_service = service_h.advertiseService("manual_backmove_cmd", Manual_Backmove_Command);
+    
+    set_weight_obstacle_service = service_h.advertiseService("setweightopstacle_cmd", Set_Weight_obstacle_Command);
+    
     //usb_cam Service Client...
     ros::NodeHandle client_h;
     usb_cam_On_client = client_h.serviceClient<std_srvs::Empty>("usb_cam/start_capture");
