@@ -134,7 +134,7 @@ using namespace rapidjson;
 //Set EKF & IMU Reset Service//
 #include "tetraDS_service/setekf.h"
 
-#include "tetraDS_service/setweightopstacle.h"
+#include "tetraDS_service/setweightobstacle.h"
 
 #define HIGH_BATTERY 95
 #define LOW_BATTERY 15
@@ -572,7 +572,7 @@ ros::ServiceServer deletedataall_service;
 tetraDS_service::setekf set_ekf_cmd;
 ros::ServiceServer set_ekf_service;
 
-tetraDS_service::setweightopstacle setweightopstacle_cmd;
+tetraDS_service::setweightobstacle setweightobstacle_cmd;
 ros::ServiceServer set_weight_obstacle_service; 
 
 //**Command srv _ Service Client************************/
@@ -5664,8 +5664,8 @@ void InitialposeCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPt
 
 }
 
-bool Set_Weight_obstacle_Command(tetraDS_service::setweightopstacle::Request &req, 
-				                tetraDS_service::setweightopstacle::Response &res)
+bool Set_Weight_obstacle_Command(tetraDS_service::setweightobstacle::Request &req, 
+				                tetraDS_service::setweightobstacle::Response &res)
 {
     bool bResult = false;
 
@@ -5815,7 +5815,7 @@ int main (int argc, char** argv)
     //Set EKF & IMU Reset Service//
     set_ekf_service = service_h.advertiseService("set_ekf_cmd", SetEKF_Command);
     
-    set_weight_obstacle_service = service_h.advertiseService("setweightopstacle_cmd", Set_Weight_obstacle_Command);
+    set_weight_obstacle_service = service_h.advertiseService("setweightobstacle_cmd", Set_Weight_obstacle_Command);
     
     //usb_cam Service Client...
     ros::NodeHandle client_h;
