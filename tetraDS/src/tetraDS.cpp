@@ -590,6 +590,11 @@ int main(int argc, char * argv[])
 	{
         ros::spinOnce();
 		
+		if(!ros::master::check()){
+			linear = 0.0;
+			angular = 0.0;
+		}
+		
 		input_linear  = linear;
 		input_angular = angular;
 
