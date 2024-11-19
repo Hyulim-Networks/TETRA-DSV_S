@@ -82,7 +82,7 @@
   </link>
 
   <joint name="usb_cam" type="fixed">
-    <origin xyz="0.135 0.0 0.181" rpy="1.5708 3.14159 4.71239"/>
+    <origin xyz="0.135 0.0 0.181" rpy="1.5708 3.14159 1.5708"/>
     <parent link="base_link"/>
     <child link="usb_cam" />
   </joint>  
@@ -148,5 +148,3 @@
 
 
 </robot>
-
-
