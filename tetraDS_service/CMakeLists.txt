@@ -61,7 +61,6 @@ add_service_files(
   SetPose.srv
   sethome_id.srv
   setekf.srv
-  power_sonar_cmd.srv
   setweightobstacle.srv
 )
 

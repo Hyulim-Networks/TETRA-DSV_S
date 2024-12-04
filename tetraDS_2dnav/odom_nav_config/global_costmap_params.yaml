@@ -26,10 +26,6 @@ global_costmap:
       type: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
     - name: rgbd_obstacle_layer2
       type: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
-    - name: sonar_obstacle_layer_RL
-      type: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
-    - name: sonar_obstacle_layer_RR
-      type: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
     - name: inflation_layer
       type: "costmap_2d::InflationLayer"
 

@@ -33,7 +33,6 @@
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/PointCloud2.h> //bumper
 #include <sensor_msgs/Joy.h> //add 
-#include <sensor_msgs/Range.h> //Ultrasonic//
 #include <teb_local_planner/TrajectoryMsg.h>
 #include <teb_local_planner/TrajectoryPointMsg.h>
 #include <teb_local_planner/FeedbackMsg.h>
@@ -428,12 +427,6 @@ typedef struct AR_TAG_POSE
 
 }AR_TAG_POSE;
 AR_TAG_POSE _pAR_tag_pose;
-
-// Ultrasonic_range//
-float m_Ultrasonic_DL_Range = 0.0;
-float m_Ultrasonic_DR_Range = 0.0;
-float m_Ultrasonic_RL_Range = 0.0;
-float m_Ultrasonic_RR_Range = 0.0;
 
 //roslaunch mode check//
 int ex_ilaunchMode = 0;
@@ -2785,28 +2778,6 @@ void BumperCallback(const std_msgs::Int32::ConstPtr& msg)
 
 }
 
-void Ultrasonic_DL_Callback(const sensor_msgs::Range::ConstPtr& msg)
-{
-    m_Ultrasonic_DL_Range = msg->range;
-}
-
-void Ultrasonic_DR_Callback(const sensor_msgs::Range::ConstPtr& msg)
-{
-    m_Ultrasonic_DR_Range = msg->range;
-}
-
-/*
-void Ultrasonic_RL_Callback(const sensor_msgs::Range::ConstPtr& msg)
-{
-    m_Ultrasonic_RL_Range = msg->range;
-}
-
-void Ultrasonic_RR_Callback(const sensor_msgs::Range::ConstPtr& msg)
-{
-    m_Ultrasonic_RR_Range = msg->range;
-}
-not used in sonar sensor after 2023 */
-
 //Conveyor function
 void LoadcellCallback(const std_msgs::Float64::ConstPtr& msg)
 {
@@ -3126,17 +3097,6 @@ bool Approach_Station2Move2()
 double Rotation_Movement()
 {
     double iResult = 0.1;
-
-    if(m_Ultrasonic_DR_Range < 0.3 )
-    {
-        m_iRotation_Mode = 1;
-        printf(" CCW Rotation--- \n");
-    }
-    else if(m_Ultrasonic_DL_Range < 0.3)
-    {
-        m_iRotation_Mode = 2;
-        printf(" CW Rotation+++ \n");
-    }
 
     switch(m_iRotation_Mode)
     {
@@ -5876,12 +5836,6 @@ int main (int argc, char** argv)
     //Conveyor_Info Subscriber//
     ros::Subscriber loadcell_status = nInfo.subscribe<std_msgs::Float64>("conveyor_loadcell", 1, LoadcellCallback);
     ros::Subscriber sensor_status = nInfo.subscribe<std_msgs::Int32>("conveyor_sensor", 1, SensorCallback);
-
-    //Ultrasonic_subscriber//
-    ros::Subscriber ultrasonic_FL = nInfo.subscribe<sensor_msgs::Range>("Ultrasonic_D_L", 10, Ultrasonic_DL_Callback);
-    ros::Subscriber ultrasonic_FR = nInfo.subscribe<sensor_msgs::Range>("Ultrasonic_D_R", 10, Ultrasonic_DR_Callback);
-    //ros::Subscriber ultrasonic_RL = nInfo.subscribe<sensor_msgs::Range>("Ultrasonic_R_L", 10, Ultrasonic_RL_Callback);
-    //ros::Subscriber ultrasonic_RR = nInfo.subscribe<sensor_msgs::Range>("Ultrasonic_R_R", 10, Ultrasonic_RR_Callback);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //bumper_data to Pointcloud2_data///
