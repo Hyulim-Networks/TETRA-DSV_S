@@ -133,10 +133,6 @@ tetraDS_interface::power_get_io_status Power_io_status_cmd;
 tetraDS_interface::GPIO gpio_msg;
 ros::Publisher GPIO_pub;
 
-ros::Publisher points_1;
-ros::Publisher points_2;
-ros::Publisher points_3;
-ros::Publisher points_4;
 
 //Conveyor Loadcell CAL
 ros::ServiceServer loadcell_callibration_service;
