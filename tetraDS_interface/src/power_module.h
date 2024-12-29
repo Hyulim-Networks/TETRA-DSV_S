@@ -18,6 +18,7 @@ typedef struct DATA
     int    _iSBumper_5;
     int    _iSBumper_6;
     int    _iSBumper_7;
+}DATA;
 
 int  power_init(const char *port, int time_out);
 void power_deinit(int fd);
