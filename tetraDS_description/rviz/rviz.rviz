@@ -112,11 +112,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera2_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         imu_link:
           Alpha: 1
           Show Axes: false
