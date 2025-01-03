@@ -3,6 +3,8 @@
     "files.associations": {
         "vector": "cpp",
         "xstring": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "deque": "cpp",
+        "istream": "cpp"
     }
 }

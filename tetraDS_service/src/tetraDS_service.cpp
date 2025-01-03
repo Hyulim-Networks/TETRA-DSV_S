@@ -1620,7 +1620,7 @@ bool GetLocation_Command(tetraDS_service::getlocation::Request  &req,
 bool Depart_Station2Move()
 {
     bool bResult = false;
-    printf("Depart_station2Move ... docking exit!! \n"); //240315 mwcha made new func
+    printf("Depart_station2Move ... docking exit!! \n"); 
 
     float m_fdistance = 0.0;
     geometry_msgs::TwistPtr cmd(new geometry_msgs::Twist());
@@ -5623,8 +5623,6 @@ void resultCallback(const move_base_msgs::MoveBaseActionResult::ConstPtr& msgRes
     ROS_INFO("Goto Cancel call");
     GotoCancel_pub.publish(goto_goal_id);
     _pFlag_Value.m_bFlag_pub = false;
-    _pGoal_pose.goal_positionX = 0.0;
-    _pGoal_pose.goal_positionY = 0.0;
 
     if(m_iRetry_cnt >= MAX_RETRY_CNT)
     {
